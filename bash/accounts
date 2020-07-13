@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# whatido : i print all the users on a computer that has access to /bin/bash
+
+n=1
+for acc in $(cat /etc/passwd | cut -d ':' -f 1,7 | grep /bin/bash | cut -d ':' -f 1)
+do
+  printf "\033[32m$n. \033[33m $acc\n"
+  n=$(($n+1))
+done
