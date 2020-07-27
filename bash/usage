@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# usage : show network usage in mbs
+
+echo $(ifconfig | tail -n9 | grep 'X packets' | tr -s ' ' | cut -d ' ' -f 7-8);
