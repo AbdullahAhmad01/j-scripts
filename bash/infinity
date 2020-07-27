@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#usage : run a command in loop
+
+while true
+do
+  clear
+  $@
+  sleep 0.3
+done
