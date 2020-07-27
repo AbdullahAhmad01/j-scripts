@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# usage : n-who
+
+usage() {
+  printf "usage : $0 [-v[v[v]]]\n"
+}
+
+verbous=0
+
+incvb() {
+  if test -z $1
+  then n=1
+  else n=$1
+  fi
+
+  if test $(($n+$verbous)) -le 3
+  then
+    verbous=$(($verbous+$n))
+  fi
+
+  return 0
+}
+
+while [[ $@ != "" ]]
+do
+  case $1 in
+    '-v')
+      incvb
+    ;;
+    '-vv')
+      incvb 2
+    ;;
+    '-vvv')
+      incvb 3
+    ;;
+    *)
+      usage
+      exit 1
+    ;;
+  esac
+  shift
+done
+
+IPS=$(ifconfig | tr -s " " | grep '^ inet ' | cut -d ' ' -f 3)
+iplist=""
+uplist=""
+
+
+#removing localhost
+temp=$IPS
+IPS=""
+
+for ip in $temp;
+do
+  ip=$(echo $ip | tr -d ' ')
+  if [[ $ip != "127.0.0.1" ]];
+  then
+    IPS="$IPS $ip"
+  fi
+done
+
+# Making scan list
+for IP in $IPS
+do
+  ippre=$(echo $IP | cut -d '.' -f 1-3)
+  for suf in {0..255}
+  do
+    iplist="$iplist $ippre.$suf"
+  done
+done
+
+test $verbous -eq 3 && echo "creating file '__uplist'"
+touch ___uplist;
+if [ ! -f ___uplist ]
+then
+  echo -n "file '__uplist' could not be created"
+  test $verbous -ge 1 && echo -n " Are you authorzied"
+  test $verbous -ge 2 && echo -n " to create a file in current directory ?"
+  printf '\n'
+  exit 1
+fi
+>___uplist
+test $verbous -eq 3 && echo -e 'file created\nStarting uphost scan'
+
+for ip in $iplist
+do
+  echo $(ping -c 1 $ip 2>/dev/null | grep '64 bytes' | head -n1 | cut -d ' ' -f 4 | tr -d ':\n') >> ___uplist & ##
+done
+
+#sleep 2 ##
+
+if ! test -z "$1"
+then
+  while test $( ps -cax |  grep $! ) != ""
+  do
+    sleep 0.5
+  done
+fi
+
+uplist=$(cat ___uplist);
+rm ./___uplist
+test $verbous -ge 3 && echo '__uplist removed'
+
+
+test $verbous -ge 1 && {
+  for host in $uplist; do echo host $host is up; done
+}
